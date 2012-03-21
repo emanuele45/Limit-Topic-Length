@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!DOCTYPE package-info SYSTEM "http://www.simplemachines.org/xml/package-info">
+<package-info xmlns="http://www.simplemachines.org/xml/package-info" xmlns:smf="http://www.simplemachines.org/">
+	<license>
+		<!--
+		/**
+		* Limit Topics Length (LTL)
+		*
+		* @package LTL
+		* @author emanuele
+		* @copyright 2011 emanuele
+		* @license http://www.simplemachines.org/about/smf/license.php BSD
+		*
+		* @version 0.1.0
+		*/
+		-->
+	</license>
+	<id>emanuele:limit_topic_length</id>
+	<name>Limit topics length</name>
+	<version>0.1.0</version>
+	<type>modification</type>
+	<install for="2.0 - 2.0.99">
+		<modification>modification.xml</modification>
+		<modification>lang.xml</modification>
+		<database>installScript.php</database>
+		<database>installHooks.php</database>
+		<require-file name="Subs-LimitTopicLength.php" destination="$sourcedir" />
+	</install>
+	<uninstall for="2.0 - 2.0.99">
+		<modification reverse="true">modification.xml</modification>
+		<modification reverse="true">lang.xml</modification>
+		<database reverse="true">installScript.php</database>
+		<code>installHooks.php</code>
+		<remove-file name="$sourcedir/Subs-LimitTopicLength.php" />
+	</uninstall>
+</package-info>

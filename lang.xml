@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+
+	<id>emanuele:limit_topic_length</id>
+	<version>0.1.0</version>
+
+	<file name="$languagedir/Modifications.english.php">
+		<operation>
+			<search position="end" />
+			<add><![CDATA[
+$txt['max_length_for_topics'] = 'Set maximum number of replies for a topic';
+$txt['locking_bot_name'] = 'Name of the user that will post the message informing the discussion continues in another topic';
+$txt['locking_bot_email'] = 'Email address of the user that will post the message informing the discussion continues in another topic';
+$txt['ltl_default_lock_message'] = 'Text of the last message before split<br />
+<span class="smalltext">Note that you can use the following variables:
+<ul>
+<li>{NEXT_TOPIC_URL} - The URL of the next topic in the series.</li>
+<li>{NEXT_TOPIC_SUBJECT} - The subject of the next topic in the series.</li>
+<li>{NEXT_TOPIC_LINK} - The link to the next topic in the series.</li>
+</ul>';
+$txt['ltl_default_new_message'] = 'Text of the last message before split<br />
+<span class="smalltext">Note that you can use the following variables:
+<ul>
+<li>{PREV_TOPIC_URL} - The URL of the previous topic in the series.</li>
+<li>{PREV_TOPIC_SUBJECT} - The subject of the previous topic in the series.</li>
+<li>{PREV_TOPIC_LINK} - The link to the previous topic in the series.</li>
+</ul>';
+
+$txt['ltl_default_text_lock_msg'] = 'This topic is now locked. It continues at {NEXT_TOPIC_LINK}';
+$txt['ltl_default_text_new_msg'] = 'This topic is the continuation of {PREV_TOPIC_LINK}';
+]]></add>
+		</operation>
+	</file>
+</modification>

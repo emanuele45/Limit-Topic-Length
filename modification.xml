@@ -1,0 +1,150 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+	<license>
+		<!--
+		/**
+		* Limit Topics Length (LTL)
+		*
+		* @package LTL
+		* @author emanuele
+		* @copyright 2011 emanuele
+		* @license http://www.simplemachines.org/about/smf/license.php BSD
+		*
+		* @version 0.1.0
+		*/
+		-->
+	</license>
+
+	<id>emanuele:limit_topic_length</id>
+	<version>0.1.0</version>
+
+	<file name="$sourcedir/Display.php">
+		<operation>
+			<search position="before"><![CDATA[
+			t.id_member_started, t.id_first_msg, t.id_last_msg, t.approved, t.unapproved_posts,]]></search>
+			<add><![CDATA[
+			t.id_new_topic, t.id_old_topic, t.num_topics,]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[		'name' => $topicinfo['subject'],]]></search>
+			<add><![CDATA[		'name' => $context['page_title'],]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[
+	// Censor the title...
+	censorText($topicinfo['subject']);
+	$context['page_title'] = $topicinfo['subject'];]]></search>
+			<add><![CDATA[
+	// Censor the title...
+	censorText($topicinfo['subject']);
+	if (!empty($topicinfo['num_topics']))
+		$context['page_title'] = '[' . $topicinfo['num_topics'] . '] ' . $topicinfo['subject'];
+	else
+		$context['page_title'] = $topicinfo['subject'];
+]]></add>
+		</operation>
+		<operation>
+			<search position="before"><![CDATA[
+	$memberContext[$message['id_member']]['ip'] = $message['poster_ip'];]]></search>
+			<add><![CDATA[
+
+	$context['has_profile_buttons'] = !empty($memberContext[$message['id_member']]['can_view_profile']) || (!empty($memberContext[$message['id_member']]['website']['url']) != '' && !isset($context['disabled_fields']['website'])) || (in_array($memberContext[$message['id_member']]['show_email'], array('yes', 'yes_permission_override', 'no_through_forum'))) || $context['can_send_pm'];]]></add>
+		</operation>
+	</file>
+
+	<file name="$sourcedir/MessageIndex.php">
+		<operation>
+			<search position="before"><![CDATA[
+				t.id_last_msg, t.approved, t.unapproved_posts]]></search>
+			<add><![CDATA[, t.num_topics]]></add>
+		</operation>
+		<operation>
+			<search position="before"><![CDATA[
+				$topic_ids[] = $row['id_topic'];]]></search>
+			<add><![CDATA[
+
+			if (!empty($row['num_topics']))
+				$row['first_subject'] = '[' . $row['num_topics'] . '] ' . $row['first_subject'];]]></add>
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Post.php">
+		<operation>
+			<search position="replace"><![CDATA[
+	// Prevent double submission of this form.
+	checkSubmitOnce('check');
+]]></search>
+			<add><![CDATA[
+	// Prevent double submission of this form.
+	if (!isset($context['ltl_override_submit_check']))
+		checkSubmitOnce('check');
+]]></add>
+		</operation>
+		<operation>
+			<search position="before"><![CDATA[
+		$request = $smcFunc['db_query']('', '
+			SELECT locked, is_sticky, id_poll, approved, id_first_msg, id_last_msg, id_member_started, id_board]]></search>
+			<add><![CDATA[
+			, num_replies, id_new_topic]]></add>
+		</operation>
+		<operation>
+			<search position="before"><![CDATA[
+		if ($topic_info['id_board'] != $board)
+			fatal_lang_error('not_a_topic');]]></search>
+			<add><![CDATA[
+
+		if (!empty($modSettings['max_length_for_topics']) && $topic_info['num_replies'] >= $modSettings['max_length_for_topics'] && empty($context['override_topic_length']))
+		{
+			$topic = ltl_lockOldTopic($topic);
+			$context['ltl_override_submit_check'] = true;
+			$topic_info['id_last_msg'] = $_REQUEST['last_msg'];
+			$_POST['last_msg'] = $_REQUEST['last_msg'];
+			return Post2();
+		}
+
+		// Wait!! The topic has been locked and is changed let's try post in the new topic.
+		if (!empty($topic_info['id_new_topic']))
+		{
+			$topic = $topic_info['id_new_topic'];
+			unset($topic_info);
+
+			do
+			{
+				$request = $smcFunc['db_query']('', '
+					SELECT locked, is_sticky, id_poll, approved, id_first_msg, id_last_msg, id_member_started, id_board,
+						num_replies, id_new_topic
+					FROM {db_prefix}topics
+					WHERE id_topic = {int:current_topic}
+					LIMIT 1',
+					array(
+						'current_topic' => $topic,
+					)
+				);
+
+				// The topic has been deleted? Not enough informations...starting a new topic.
+				if($smcFunc['db_num_rows']($request) == 0)
+				{
+					$topic = 0;
+					break;
+				}
+				$topic_info = $smcFunc['db_fetch_assoc']($request);
+				$smcFunc['db_free_result']($request);
+			} while (
+				(!empty($modSettings['recycle_enable']) && $topic_info['id_board'] == $modSettings['recycle_board'])
+					||
+				(!allowedTo('post_reply_any', $topic_info['id_board']) || !(allowedTo('post_reply_own', $topic_info['id_board']) && $topic_info['id_member_started'] == $user_info['id']))
+			);
+				
+		}]]></add>
+		</operation>
+	</file>
+
+	<file name="$themedir/Display.template.php" error="skip">
+		<operation>
+			<search position="replace"><![CDATA[', $txt['topic'], ': ', $context['subject'],]]></search>
+			<add><![CDATA[', $txt['topic'], ': ', $context['page_title'],]]></add>
+		</operation>
+	</file>
+
+</modification>
